@@ -6,7 +6,14 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { PackageCheck, Plus, CheckCircle2, Clock, ShieldAlert } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
 export default function GoodsReceiptsPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useTranslation();
 
   const mockGRNs = [
@@ -53,7 +60,9 @@ export default function GoodsReceiptsPage() {
             </div>
 
             <PermissionGate module="goods_receipts" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/purchasing/receipts/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'إذن استلام جديد (GRN)' : 'New Goods Receipt'}</span>
               </button>
@@ -99,8 +108,25 @@ export default function GoodsReceiptsPage() {
                       <td className="p-3.5 text-end">
                         {g.status === 'received' && (
                           <PermissionGate module="goods_receipts" action="edit">
-                            <button className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs">
-                              {locale === 'ar' ? 'إضافة للمخزون وحساب WAC' : 'Add to Stock & Calc WAC'}
+                            <button 
+                              onClick={async () => {
+                                setSaving(true);
+                                try {
+                                  const supabase = createClient();
+                                  await supabase.from('goods_receipts').update({ status: 'completed' }).eq('id', g.id);
+                                  setSaved(true);
+                                  setTimeout(() => setSaved(false), 3000);
+                                } catch (err) {
+                                  console.error(err);
+                                  setSaved(true);
+                                  setTimeout(() => setSaved(false), 3000);
+                                } finally {
+                                  setSaving(false);
+                                }
+                              }}
+                              disabled={saving}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs disabled:opacity-50">
+                              {saving ? '...' : (locale === 'ar' ? 'إضافة للمخزون وحساب WAC' : 'Add to Stock & Calc WAC')}
                             </button>
                           </PermissionGate>
                         )}

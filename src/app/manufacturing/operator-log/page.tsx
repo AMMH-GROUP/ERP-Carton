@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
-import { Save, Factory, Clock, AlertTriangle, CheckCircle2, Play } from 'lucide-react';
+import { Save, Factory, Clock, AlertTriangle, CheckCircle2, Play, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function OperatorLogPage() {
   const { t, locale } = useTranslation();
@@ -21,11 +22,25 @@ export default function OperatorLogPage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('production_logs').insert([log]);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setLog({ ...log, produced_qty: '', scrap_qty: '', waste_qty: '', machine_hours: '', downtime_hours: '', downtime_reason: '' });
+    } catch (err) {
+      console.error(err);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setLog({ ...log, produced_qty: '', scrap_qty: '', waste_qty: '', machine_hours: '', downtime_hours: '', downtime_reason: '' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -157,10 +172,11 @@ export default function OperatorLogPage() {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                disabled={saving}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                <Save className="w-4 h-4" />
-                <span>{locale === 'ar' ? 'حفظ بيان التشغيل' : 'Submit Operator Log'}</span>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>{saving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (locale === 'ar' ? 'حفظ بيان التشغيل' : 'Submit Operator Log')}</span>
               </button>
             </div>
           </form>

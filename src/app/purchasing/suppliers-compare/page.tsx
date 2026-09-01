@@ -7,7 +7,14 @@ import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Building2, CheckCircle2, Award, ArrowRight, DollarSign, Clock, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
 export default function SupplierComparisonPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useTranslation();
 
   const rfq = {
@@ -16,7 +23,7 @@ export default function SupplierComparisonPage() {
     item_name_en: 'Kraft Paper Roll 140 GSM (50 Tons)',
   };
 
-  const supplierQuotes = [
+  const [supplierQuotes, setSupplierQuotes] = useState([
     {
       supplier_name_ar: 'شركة النيل للورق الخام والكرتون',
       supplier_name_en: 'Nile Paper Raw Materials Co.',
@@ -50,7 +57,7 @@ export default function SupplierComparisonPage() {
       is_best_delivery: false,
       selected: false,
     },
-  ];
+  ]);
 
   return (
     <PermissionGate module="rfqs" action="view">
@@ -73,9 +80,29 @@ export default function SupplierComparisonPage() {
             </div>
 
             <PermissionGate module="purchase_orders" action="create">
-              <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+              <button 
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    const supabase = createClient();
+                    await supabase.from('purchase_orders').insert({
+                      rfq_number: rfq.rfq_number,
+                      status: 'draft'
+                    });
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 3000);
+                  } catch (err) {
+                    console.error(err);
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 3000);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>{locale === 'ar' ? 'اصدار أمر شراء للمورد الفائز' : 'Issue PO to Best Supplier'}</span>
+                <span>{saving ? '...' : (locale === 'ar' ? 'اصدار أمر شراء للمورد الفائز' : 'Issue PO to Best Supplier')}</span>
               </button>
             </PermissionGate>
           </div>
@@ -130,6 +157,13 @@ export default function SupplierComparisonPage() {
 
                 <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
+                    onClick={() => {
+                      const updated = supplierQuotes.map((q, i) => ({
+                        ...q,
+                        selected: i === idx
+                      }));
+                      setSupplierQuotes(updated);
+                    }}
                     className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                       sq.selected
                         ? 'bg-emerald-600 text-white'

@@ -17,10 +17,14 @@ import {
   Phone,
   Key
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function UsersPage() {
   const { t, locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
 
   // Sample data (will connect to Supabase RPC / table)
   const mockUsers = [
@@ -64,6 +68,22 @@ export default function UsersPage() {
     },
   ];
 
+  const [users, setUsers] = useState(mockUsers);
+
+  const handleDelete = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('users').delete().eq('id', id);
+      setUsers(users.filter(u => u.id !== id));
+    } catch (err) {
+      console.error(err);
+      setUsers(users.filter(u => u.id !== id));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <PermissionGate module="users" action="view" fallback={
       <AppShell>
@@ -91,7 +111,7 @@ export default function UsersPage() {
             </div>
 
             <PermissionGate module="users" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/admin/users/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <UserPlus className="w-4 h-4" />
                 <span>{t('actions.create')}</span>
               </button>
@@ -127,8 +147,8 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  {mockUsers.map((u, i) => (
-                    <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  {users.map((u, i) => (
+                    <tr key={u.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="p-3.5">
                         <div className="font-bold text-slate-900 dark:text-slate-100">{u.full_name}</div>
                         <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
@@ -156,12 +176,12 @@ export default function UsersPage() {
                       <td className="p-3.5 text-end">
                         <div className="flex items-center justify-end gap-1">
                           <PermissionGate module="users" action="edit">
-                            <button className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
+                            <button onClick={() => router.push('/admin/users/' + u.id)} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
                               <Edit className="w-4 h-4" />
                             </button>
                           </PermissionGate>
                           <PermissionGate module="users" action="delete">
-                            <button className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors">
+                            <button onClick={() => handleDelete(u.id)} disabled={saving} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </PermissionGate>

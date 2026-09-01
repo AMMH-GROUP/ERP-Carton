@@ -6,7 +6,10 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Warehouse, Plus, Search, CheckCircle2, MapPin, Package } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 export default function WarehousesPage() {
+  const router = useRouter();
   const { t, locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -74,7 +77,9 @@ export default function WarehousesPage() {
             </div>
 
             <PermissionGate module="warehouses" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/inventory/warehouses/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'إضافة مستودع جديد' : 'Add Warehouse'}</span>
               </button>
@@ -120,7 +125,9 @@ export default function WarehousesPage() {
                     {wh.items_count} {locale === 'ar' ? 'صنف مسجل' : 'Items Stored'}
                   </span>
 
-                  <button className="text-indigo-600 hover:underline font-bold">
+                  <button 
+                    onClick={() => router.push(`/inventory/stock?warehouse=${wh.id}`)}
+                    className="text-indigo-600 hover:underline font-bold">
                     {locale === 'ar' ? 'عرض المخزون' : 'View Stock'}
                   </button>
                 </div>

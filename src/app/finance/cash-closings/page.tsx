@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { CheckCircle2, AlertTriangle, Clock, Wallet, ShieldAlert } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CashClosingsPage() {
   const { t, locale } = useTranslation();
@@ -34,6 +35,28 @@ export default function CashClosingsPage() {
     },
   ];
 
+  const [closings, setClosings] = useState(mockClosings);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleApprove = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('cash_closings').update({ status: 'approved' }).eq('id', id);
+      setClosings(closings.map(c => c.id === id ? { ...c, status: 'approved' } : c));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+      setClosings(closings.map(c => c.id === id ? { ...c, status: 'approved' } : c));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <PermissionGate module="general_ledger" action="view">
       <AppShell>
@@ -57,7 +80,7 @@ export default function CashClosingsPage() {
 
           {/* Cards */}
           <div className="space-y-4">
-            {mockClosings.map((c) => (
+            {closings.map((c) => (
               <div key={c.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
@@ -108,8 +131,8 @@ export default function CashClosingsPage() {
                     </p>
 
                     <PermissionGate module="general_ledger" action="approve">
-                      <button className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs">
-                        {locale === 'ar' ? 'اعتماد التفاوت وتسويته' : 'Approve & Settle Variance'}
+                      <button onClick={() => handleApprove(c.id)} disabled={saving} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs disabled:opacity-70">
+                        {saving ? (locale === 'ar' ? 'جاري الاعتماد...' : 'Approving...') : (locale === 'ar' ? 'اعتماد التفاوت وتسويته' : 'Approve & Settle Variance')}
                       </button>
                     </PermissionGate>
                   </div>

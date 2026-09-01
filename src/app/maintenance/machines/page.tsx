@@ -5,9 +5,11 @@ import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Wrench, Plus, CheckCircle2, AlertTriangle, Clock, Activity, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function MachinesPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
 
   const mockMachines = [
     {
@@ -66,7 +68,7 @@ export default function MachinesPage() {
             </div>
 
             <PermissionGate module="machines" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/maintenance/machines/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'إضافة ماكينة جديدة' : 'Add Machine'}</span>
               </button>

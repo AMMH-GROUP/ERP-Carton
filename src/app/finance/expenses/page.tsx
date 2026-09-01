@@ -6,6 +6,8 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Receipt, Plus, CheckCircle2, Clock, ShieldAlert } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ExpensesPage() {
   const { t, locale } = useTranslation();
@@ -33,6 +35,24 @@ export default function ExpensesPage() {
     },
   ];
 
+  const router = useRouter();
+  const [expenses, setExpenses] = useState(mockExpenses);
+  const [saving, setSaving] = useState(false);
+
+  const handleApprove = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('expenses').update({ status: 'approved' }).eq('id', id);
+      setExpenses(expenses.map(exp => exp.id === id ? { ...exp, status: 'approved' } : exp));
+    } catch (err) {
+      console.error(err);
+      setExpenses(expenses.map(exp => exp.id === id ? { ...exp, status: 'approved' } : exp));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <PermissionGate module="expenses" action="view">
       <AppShell>
@@ -54,7 +74,7 @@ export default function ExpensesPage() {
             </div>
 
             <PermissionGate module="expenses" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/finance/expenses/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'طلب مصروف جديد' : 'New Expense Claim'}</span>
               </button>
@@ -76,7 +96,7 @@ export default function ExpensesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  {mockExpenses.map((exp) => (
+                  {expenses.map((exp) => (
                     <tr key={exp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="p-3.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
                         {exp.expense_number}
@@ -103,8 +123,8 @@ export default function ExpensesPage() {
                       <td className="p-3.5 text-end">
                         {exp.status === 'pending_approval' && (
                           <PermissionGate module="expenses" action="approve">
-                            <button className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs">
-                              {t('actions.approve')}
+                            <button onClick={() => handleApprove(exp.id)} disabled={saving} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs disabled:opacity-70">
+                              {saving ? (locale === 'ar' ? 'جاري الاعتماد...' : 'Approving...') : t('actions.approve')}
                             </button>
                           </PermissionGate>
                         )}

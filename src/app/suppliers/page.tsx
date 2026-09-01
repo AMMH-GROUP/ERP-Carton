@@ -19,7 +19,11 @@ import {
   X
 } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
 export default function SuppliersPage() {
+  const router = useRouter();
   const { t, locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -95,7 +99,7 @@ export default function SuppliersPage() {
 
             <PermissionGate module="suppliers" action="create">
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => router.push('/suppliers/new')}
                 className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -186,7 +190,9 @@ export default function SuppliersPage() {
                             <Eye className="w-4 h-4" />
                           </Link>
                           <PermissionGate module="suppliers" action="edit">
-                            <button className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
+                            <button 
+                              onClick={() => router.push(`/suppliers/${s.id}/edit`)}
+                              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
                               <Edit className="w-4 h-4" />
                             </button>
                           </PermissionGate>

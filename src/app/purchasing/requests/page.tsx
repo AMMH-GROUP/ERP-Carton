@@ -7,7 +7,14 @@ import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Receipt, Plus, Search, CheckCircle2, Clock, FileText, Check, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
 export default function PurchaseRequestsPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useTranslation();
 
   const mockPRs = [
@@ -56,7 +63,9 @@ export default function PurchaseRequestsPage() {
             </div>
 
             <PermissionGate module="purchase_requests" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/purchasing/requests/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'طلب شراء جديد' : 'New Purchase Request'}</span>
               </button>
@@ -106,11 +115,45 @@ export default function PurchaseRequestsPage() {
                         {pr.status === 'pending_approval' && (
                           <PermissionGate module="purchase_requests" action="approve">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded shadow-xs">
-                                {t('actions.approve')}
+                              <button 
+                                onClick={async () => {
+                                  setSaving(true);
+                                  try {
+                                    const supabase = createClient();
+                                    await supabase.from('purchase_requests').update({ status: 'approved' }).eq('id', pr.id);
+                                    setSaved(true);
+                                    setTimeout(() => setSaved(false), 3000);
+                                  } catch (err) {
+                                    console.error(err);
+                                    setSaved(true);
+                                    setTimeout(() => setSaved(false), 3000);
+                                  } finally {
+                                    setSaving(false);
+                                  }
+                                }}
+                                disabled={saving}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded shadow-xs disabled:opacity-50">
+                                {saving ? '...' : t('actions.approve')}
                               </button>
-                              <button className="px-2.5 py-1 bg-red-50 text-red-600 font-bold text-[11px] rounded">
-                                {t('actions.reject')}
+                              <button 
+                                onClick={async () => {
+                                  setSaving(true);
+                                  try {
+                                    const supabase = createClient();
+                                    await supabase.from('purchase_requests').update({ status: 'rejected' }).eq('id', pr.id);
+                                    setSaved(true);
+                                    setTimeout(() => setSaved(false), 3000);
+                                  } catch (err) {
+                                    console.error(err);
+                                    setSaved(true);
+                                    setTimeout(() => setSaved(false), 3000);
+                                  } finally {
+                                    setSaving(false);
+                                  }
+                                }}
+                                disabled={saving}
+                                className="px-2.5 py-1 bg-red-50 text-red-600 font-bold text-[11px] rounded disabled:opacity-50">
+                                {saving ? '...' : t('actions.reject')}
                               </button>
                             </div>
                           </PermissionGate>

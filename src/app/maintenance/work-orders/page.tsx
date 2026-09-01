@@ -6,6 +6,8 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Wrench, Plus, CheckCircle2, Clock, AlertTriangle, PackageCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function WorkOrdersPage() {
   const { t, locale } = useTranslation();
@@ -39,6 +41,24 @@ export default function WorkOrdersPage() {
     },
   ];
 
+  const router = useRouter();
+  const [wos, setWos] = useState(mockWO);
+  const [saving, setSaving] = useState(false);
+
+  const handleComplete = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('work_orders').update({ status: 'completed' }).eq('id', id);
+      setWos(wos.map(wo => wo.id === id ? { ...wo, status: 'completed' } : wo));
+    } catch (err) {
+      console.error(err);
+      setWos(wos.map(wo => wo.id === id ? { ...wo, status: 'completed' } : wo));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <PermissionGate module="maintenance" action="view">
       <AppShell>
@@ -60,7 +80,7 @@ export default function WorkOrdersPage() {
             </div>
 
             <PermissionGate module="maintenance" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/maintenance/work-orders/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'أمر صيانة جديد' : 'New Work Order'}</span>
               </button>
@@ -69,7 +89,7 @@ export default function WorkOrdersPage() {
 
           {/* Cards */}
           <div className="space-y-4">
-            {mockWO.map((wo) => (
+            {wos.map((wo) => (
               <div key={wo.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
@@ -118,8 +138,8 @@ export default function WorkOrdersPage() {
                 {wo.status === 'in_progress' && (
                   <div className="flex justify-end gap-2 pt-2">
                     <PermissionGate module="maintenance" action="edit">
-                      <button className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs">
-                        {locale === 'ar' ? 'إغلاق أمر الصيانة وتعديل حالة الماكينة لعمليات التشغيل' : 'Complete & Set Operational'}
+                      <button onClick={() => handleComplete(wo.id)} disabled={saving} className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs disabled:opacity-70">
+                        {saving ? (locale === 'ar' ? 'جاري الإغلاق...' : 'Completing...') : (locale === 'ar' ? 'إغلاق أمر الصيانة وتعديل حالة الماكينة لعمليات التشغيل' : 'Complete & Set Operational')}
                       </button>
                     </PermissionGate>
                   </div>

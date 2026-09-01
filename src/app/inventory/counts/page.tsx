@@ -7,7 +7,10 @@ import { PermissionGate } from '@/components/shared/PermissionGate';
 import { ClipboardList, Plus, CheckCircle2, AlertTriangle, Calculator, FileCheck } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
 
+import { useRouter } from 'next/navigation';
+
 export default function StockCountsPage() {
+  const router = useRouter();
   const { t, locale } = useTranslation();
 
   const mockCounts = [
@@ -47,7 +50,9 @@ export default function StockCountsPage() {
             </div>
 
             <PermissionGate module="stock_counts" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/inventory/counts/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'بدء جلسة جرد جديدة' : 'Start New Count Session'}</span>
               </button>

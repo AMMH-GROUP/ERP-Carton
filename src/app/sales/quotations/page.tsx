@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
@@ -22,6 +23,7 @@ import { formatCurrency } from '@/lib/utils';
 
 export default function QuotationsPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -140,7 +142,10 @@ export default function QuotationsPage() {
                         <div className="flex items-center justify-end gap-2">
                           {q.status === 'accepted' && (
                             <PermissionGate module="sales_orders" action="create">
-                              <button className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs flex items-center gap-1">
+                              <button 
+                                onClick={() => router.push('/sales/orders')}
+                                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs flex items-center gap-1"
+                              >
                                 <ArrowRightLeft className="w-3.5 h-3.5" />
                                 <span>{locale === 'ar' ? 'تحويل لأمر بيع' : 'Convert to SO'}</span>
                               </button>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { Clock, CheckCircle2, XCircle, AlertCircle, Eye, Check, X } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ApprovalsPage() {
   const { t, locale } = useTranslation();
@@ -41,6 +42,37 @@ export default function ApprovalsPage() {
       amount: '4,500 EGP',
     },
   ];
+
+  const [approvals, setApprovals] = useState(pendingApprovals);
+  const [saving, setSaving] = useState(false);
+
+  const handleApprove = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('approvals').update({ status: 'approved' }).eq('id', id);
+      setApprovals(approvals.filter(a => a.id !== id));
+    } catch (err) {
+      console.error(err);
+      setApprovals(approvals.filter(a => a.id !== id));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('approvals').update({ status: 'rejected' }).eq('id', id);
+      setApprovals(approvals.filter(a => a.id !== id));
+    } catch (err) {
+      console.error(err);
+      setApprovals(approvals.filter(a => a.id !== id));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <AppShell>
@@ -88,7 +120,7 @@ export default function ApprovalsPage() {
 
         {/* Approvals List */}
         <div className="space-y-4">
-          {pendingApprovals.map((req) => (
+          {approvals.map((req) => (
             <div
               key={req.id}
               className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
@@ -116,11 +148,11 @@ export default function ApprovalsPage() {
                 </span>
 
                 <div className="flex items-center gap-2">
-                  <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center gap-1">
+                  <button onClick={() => handleApprove(req.id)} disabled={saving} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center gap-1 disabled:opacity-50">
                     <Check className="w-4 h-4" />
                     <span>{t('actions.approve')}</span>
                   </button>
-                  <button className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/40 dark:hover:bg-red-900/60 dark:text-red-400 rounded-xl text-xs font-bold transition-colors flex items-center gap-1">
+                  <button onClick={() => handleReject(req.id)} disabled={saving} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/40 dark:hover:bg-red-900/60 dark:text-red-400 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-50">
                     <X className="w-4 h-4" />
                     <span>{t('actions.reject')}</span>
                   </button>

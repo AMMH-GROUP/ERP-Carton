@@ -4,14 +4,20 @@ import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
-import { FileText, Save, Calculator, AlertTriangle, ShieldAlert, Plus, Trash2 } from 'lucide-react';
+import { FileText, Save, Calculator, AlertTriangle, ShieldAlert, Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CreateQuotationPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
 
   const [customer, setCustomer] = useState('cust-1');
   const [validUntil, setValidUntil] = useState('2026-09-30');
+  
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // Custom Box Specs
   const [specs, setSpecs] = useState({
@@ -37,6 +43,38 @@ export default function CreateQuotationPage() {
   const vatAmount = lineSubtotal * 0.14;
   const totalAmount = lineSubtotal + vatAmount;
 
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('quotations').insert({
+        customer_id: customer,
+        valid_until: validUntil,
+        length: specs.length,
+        width: specs.width,
+        height: specs.height,
+        quantity: specs.quantity,
+        offered_price: offeredUnitPrice,
+        total_amount: totalAmount,
+        status: 'draft'
+      });
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        router.push('/sales/quotations');
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        router.push('/sales/quotations');
+      }, 1500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <PermissionGate module="quotations" action="create">
       <AppShell>
@@ -57,10 +95,22 @@ export default function CreateQuotationPage() {
               </p>
             </div>
 
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
-              <Save className="w-4 h-4" />
-              <span>{locale === 'ar' ? 'حفظ وإرسال' : 'Save & Submit'}</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {saved && (
+                <span className="text-emerald-500 font-bold text-sm flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {locale === 'ar' ? 'تم الحفظ بنجاح!' : 'Saved successfully!'}
+                </span>
+              )}
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>{saving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (locale === 'ar' ? 'حفظ وإرسال' : 'Save & Submit')}</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

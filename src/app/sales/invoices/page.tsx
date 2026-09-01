@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
@@ -9,6 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 
 export default function SalesInvoicesPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
 
   const mockInvoices = [
     {
@@ -56,7 +58,10 @@ export default function SalesInvoicesPage() {
             </div>
 
             <PermissionGate module="sales_invoices" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/sales/invoices/create')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+              >
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'إصدار فاتورة جديدة' : 'Create Sales Invoice'}</span>
               </button>

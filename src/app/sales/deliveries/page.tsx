@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
@@ -8,6 +9,9 @@ import { Truck, Plus, CheckCircle2, Clock, AlertTriangle, ArrowUpRight } from 'l
 
 export default function DeliveriesPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [confirmedIds, setConfirmedIds] = useState<string[]>([]);
 
   const mockDeliveries = [
     {
@@ -55,7 +59,10 @@ export default function DeliveriesPage() {
             </div>
 
             <PermissionGate module="deliveries" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/sales/deliveries/create')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+              >
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'إذن تسليم جديد' : 'New Delivery Note'}</span>
               </button>
@@ -99,12 +106,27 @@ export default function DeliveriesPage() {
                         )}
                       </td>
                       <td className="p-3.5 text-end">
-                        {d.status === 'confirmed' && (
+                        {d.status === 'confirmed' && !confirmedIds.includes(d.id) && (
                           <PermissionGate module="deliveries" action="edit">
-                            <button className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs">
-                              {locale === 'ar' ? 'تأكيد التسليم وصرف المخزون' : 'Confirm & Issue Stock'}
+                            <button 
+                              onClick={() => {
+                                setConfirming(d.id);
+                                setTimeout(() => {
+                                  setConfirming(null);
+                                  setConfirmedIds([...confirmedIds, d.id]);
+                                }, 1000);
+                              }}
+                              disabled={confirming === d.id}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded shadow-xs"
+                            >
+                              {confirming === d.id ? '...' : (locale === 'ar' ? 'تأكيد التسليم وصرف المخزون' : 'Confirm & Issue Stock')}
                             </button>
                           </PermissionGate>
+                        )}
+                        {confirmedIds.includes(d.id) && (
+                          <span className="text-emerald-500 font-bold text-xs">
+                            <CheckCircle2 className="w-4 h-4 inline" />
+                          </span>
                         )}
                       </td>
                     </tr>

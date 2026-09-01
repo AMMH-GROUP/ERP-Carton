@@ -10,7 +10,6 @@ import {
   ShoppingCart,
   Package,
   Factory,
-  CheckCircle,
   Wrench,
   DollarSign,
   BarChart3,
@@ -18,17 +17,10 @@ import {
   ChevronDown,
   ChevronRight,
   Box,
-  FileText,
-  Truck,
   Receipt,
-  Users,
-  Building2,
-  ListOrdered,
-  Layers,
-  Settings,
-  ShieldCheck,
-  FileCheck,
-  ClipboardList
+  X,
+  PlusCircle,
+  Calculator
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -42,9 +34,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { hasPermission, isSuperAdmin } = usePermissions();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     sales: true,
+    purchasing: true,
     inventory: true,
     manufacturing: true,
-    finance: false,
+    finance: true,
+    maintenance: false,
     admin: false,
   });
 
@@ -66,6 +60,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: ShoppingCart,
       permission: { module: 'sales_orders', action: 'view' },
       items: [
+        { label: locale === 'ar' ? '➕ حاسبة عروض الأسعار' : '➕ Quotation Pricing Builder', href: '/sales/quotations/create', permission: 'quotations' },
         { label: t('nav.quotations'), href: '/sales/quotations', permission: 'quotations' },
         { label: t('nav.salesOrders'), href: '/sales/orders', permission: 'sales_orders' },
         { label: t('nav.deliveries'), href: '/sales/deliveries', permission: 'deliveries' },
@@ -80,7 +75,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       permission: { module: 'purchase_orders', action: 'view' },
       items: [
         { label: t('nav.purchaseRequests'), href: '/purchasing/requests', permission: 'purchase_requests' },
-        { label: t('nav.rfqs'), href: '/purchasing/rfqs', permission: 'rfqs' },
+        { label: locale === 'ar' ? 'مقارنة الموردين' : 'Suppliers Compare', href: '/purchasing/suppliers-compare', permission: 'rfqs' },
         { label: t('nav.purchaseOrders'), href: '/purchasing/orders', permission: 'purchase_orders' },
         { label: t('nav.goodsReceipts'), href: '/purchasing/receipts', permission: 'goods_receipts' },
         { label: t('nav.purchaseInvoices'), href: '/purchasing/invoices', permission: 'purchase_invoices' },
@@ -95,9 +90,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       items: [
         { label: t('nav.stockOnHand'), href: '/inventory/stock', permission: 'inventory' },
         { label: t('nav.transfers'), href: '/inventory/transfers', permission: 'warehouse_transfers' },
-        { label: t('nav.adjustments'), href: '/inventory/adjustments', permission: 'stock_adjustments' },
         { label: t('nav.stockCounts'), href: '/inventory/counts', permission: 'stock_counts' },
         { label: t('nav.warehouses'), href: '/inventory/warehouses', permission: 'warehouses' },
+        { label: locale === 'ar' ? 'سجل تتبع الحركات' : 'Movements Ledger', href: '/inventory/transactions', permission: 'inventory' },
       ],
     },
     {
@@ -108,10 +103,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       items: [
         { label: t('nav.boms'), href: '/manufacturing/boms', permission: 'bom' },
         { label: t('nav.productionOrders'), href: '/manufacturing/orders', permission: 'production_orders' },
-        { label: t('nav.materialRequests'), href: '/manufacturing/material-requests', permission: 'material_requests' },
+        { label: locale === 'ar' ? 'سجل المشغل اليومي' : 'Operator Daily Log', href: '/manufacturing/operator-log', permission: 'production_logs' },
         { label: t('nav.qcInspections'), href: '/manufacturing/qc', permission: 'qc_inspections' },
-        { label: t('nav.rework'), href: '/manufacturing/rework', permission: 'rework_orders' },
-        { label: t('nav.scrap'), href: '/manufacturing/scrap', permission: 'scrap' },
       ],
     },
     {
@@ -136,16 +129,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       permission: { module: 'maintenance_orders', action: 'view' },
       items: [
         { label: t('nav.machines'), href: '/maintenance/machines', permission: 'machines' },
-        { label: t('nav.maintenanceOrders'), href: '/maintenance/orders', permission: 'maintenance_orders' },
-        { label: t('nav.preventiveMaintenance'), href: '/maintenance/preventive', permission: 'preventive_maintenance' },
-        { label: t('nav.downtime'), href: '/maintenance/downtime', permission: 'maintenance_orders' },
+        { label: locale === 'ar' ? 'أوامر الصيانة' : 'Work Orders', href: '/maintenance/work-orders', permission: 'maintenance_orders' },
+        { label: locale === 'ar' ? 'الصيانة الوقائية' : 'PM Schedules', href: '/maintenance/schedules', permission: 'preventive_maintenance' },
       ],
     },
     {
       key: 'reports',
       label: t('nav.reports'),
       icon: BarChart3,
-      href: '/reports',
+      href: '/reports/executive',
       permission: { module: 'reports', action: 'view' },
     },
     {
@@ -169,34 +161,56 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
         />
       )}
 
       <aside
-        className={`fixed lg:static top-0 bottom-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 ${
-          isOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full lg:translate-x-0'
+        className={`fixed lg:static top-0 bottom-0 z-40 w-64 bg-slate-900 dark:bg-slate-900 border-r rtl:border-r-0 rtl:border-l border-slate-800 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out shrink-0 ${
+          isOpen
+            ? 'translate-x-0'
+            : '-translate-x-full ltr:-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0'
         }`}
       >
-        {/* Brand Logo */}
-        <div className="h-16 flex items-center px-6 gap-3 border-b border-slate-800 bg-slate-950/50">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 font-bold">
-            <Box className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-sm text-white tracking-wide">
-              {t('app.shortTitle')}
-            </h1>
-            <p className="text-[10px] text-slate-400 font-medium">
-              {locale === 'ar' ? 'مصنع الكرتون المضلع' : 'Corrugated Carton ERP'}
-            </p>
-          </div>
+        {/* Brand Logo & Mobile Close */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800 bg-slate-950/40">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 font-bold">
+              <Box className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="font-extrabold text-sm text-white tracking-wide">
+                {t('app.shortTitle')}
+              </h1>
+              <p className="text-[10px] text-slate-400 font-medium">
+                {locale === 'ar' ? 'مصنع الكرتون المضلع' : 'Corrugated Carton ERP'}
+              </p>
+            </div>
+          </Link>
+
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Quick Action Button */}
+        <div className="px-3 pt-3">
+          <Link
+            href="/sales/quotations/create"
+            onClick={onClose}
+            className="w-full py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all duration-200"
+          >
+            <Calculator className="w-4 h-4" />
+            <span>{locale === 'ar' ? 'حساب عرض سعر جديد' : 'New Box Pricing'}</span>
+          </Link>
         </div>
 
         {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
           {navGroups.map((group) => {
-            // Permission filtering
             if (
               group.permission &&
               !isSuperAdmin &&
@@ -214,13 +228,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   key={group.key}
                   href={group.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                      : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30'
+                      : 'hover:bg-slate-800/80 hover:text-white text-slate-400'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                   <span>{group.label}</span>
                 </Link>
               );
@@ -233,25 +247,25 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div key={group.key} className="space-y-1">
                 <button
                   onClick={() => toggleSection(group.key)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                     hasActiveChild
-                      ? 'bg-slate-800/80 text-white font-semibold'
-                      : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                      ? 'bg-slate-800 text-white border-l-2 rtl:border-l-0 rtl:border-r-2 border-indigo-500'
+                      : 'hover:bg-slate-800/70 hover:text-white text-slate-400'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5 text-indigo-400" />
+                    <Icon className="w-4 h-4 text-indigo-400" />
                     <span>{group.label}</span>
                   </div>
                   {isExpanded ? (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 ltr:inline rtl:hidden text-slate-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180" />
                   )}
                 </button>
 
                 {isExpanded && (
-                  <div className="ltr:pl-9 rtl:pr-9 space-y-1 py-1">
+                  <div className="ltr:pl-8 rtl:pr-8 space-y-1 py-1 transition-all">
                     {group.items?.map((item) => {
                       if (
                         item.permission &&
@@ -268,10 +282,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           key={item.href}
                           href={item.href}
                           onClick={onClose}
-                          className={`block px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          className={`block px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                             isChildActive
-                              ? 'bg-indigo-600/20 text-indigo-400 border-l-2 border-indigo-500 font-semibold'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                              ? 'bg-indigo-600/20 text-indigo-300 font-bold border-l-2 rtl:border-l-0 rtl:border-r-2 border-indigo-500'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
                           }`}
                         >
                           {item.label}
@@ -286,8 +300,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer info */}
-        <div className="p-4 border-t border-slate-800 text-[11px] text-slate-500 text-center">
-          <p>Carton ERP v1.0.0</p>
+        <div className="p-4 border-t border-slate-800 text-[11px] text-slate-500 text-center bg-slate-950/40">
+          <p className="font-semibold text-slate-400">Carton ERP v1.0.0</p>
           <p className="mt-0.5">© 2026 Corrugated Carton Factory</p>
         </div>
       </aside>

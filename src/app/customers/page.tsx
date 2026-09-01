@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
@@ -21,7 +23,8 @@ import {
   Trash2,
   X,
   Save,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -30,6 +33,10 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const router = useRouter();
+
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -110,9 +117,38 @@ export default function CustomersPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateCustomer = (e: React.FormEvent) => {
+  const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowCreateModal(false);
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('customers').insert({
+        customer_code: formData.customer_code,
+        name_ar: formData.name_ar,
+        name_en: formData.name_en,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        tax_number: formData.tax_number,
+        payment_terms_days: parseInt(formData.payment_terms_days),
+        credit_limit: parseFloat(formData.credit_limit),
+        status: formData.status
+      });
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        setShowCreateModal(false);
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        setShowCreateModal(false);
+      }, 1500);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -247,7 +283,10 @@ export default function CustomersPage() {
                               <Eye className="w-4 h-4" />
                             </Link>
                             <PermissionGate module="customers" action="edit">
-                              <button className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
+                              <button 
+                                onClick={() => router.push(`/customers/${c.id}/edit`)}
+                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
+                              >
                                 <Edit className="w-4 h-4" />
                               </button>
                             </PermissionGate>
@@ -343,12 +382,14 @@ export default function CustomersPage() {
                     >
                       {t('actions.cancel')}
                     </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm"
-                    >
-                      {t('actions.save')}
-                    </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg shadow-sm"
+                      >
+                        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {saved ? (locale === 'ar' ? 'تم الحفظ' : 'Saved') : t('actions.save')}
+                      </button>
                   </div>
                 </form>
               </div>

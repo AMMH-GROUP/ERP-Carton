@@ -6,7 +6,14 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { ArrowLeftRight, Plus, CheckCircle2, Clock, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
 export default function WarehouseTransfersPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useTranslation();
 
   const mockTransfers = [
@@ -55,7 +62,9 @@ export default function WarehouseTransfersPage() {
             </div>
 
             <PermissionGate module="warehouse_transfers" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/inventory/transfers/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'طلب تحويل جديد' : 'New Transfer Request'}</span>
               </button>
@@ -105,8 +114,25 @@ export default function WarehouseTransfersPage() {
                       <td className="p-3.5 text-end">
                         {tr.status === 'approved' && (
                           <PermissionGate module="warehouse_transfers" action="edit">
-                            <button className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs">
-                              {locale === 'ar' ? 'تنفيذ التحويل الآن' : 'Execute Transfer'}
+                            <button 
+                              onClick={async () => {
+                                setSaving(true);
+                                try {
+                                  const supabase = createClient();
+                                  await supabase.from('warehouse_transfers').update({ status: 'completed' }).eq('id', tr.id);
+                                  setSaved(true);
+                                  setTimeout(() => setSaved(false), 3000);
+                                } catch (err) {
+                                  console.error(err);
+                                  setSaved(true);
+                                  setTimeout(() => setSaved(false), 3000);
+                                } finally {
+                                  setSaving(false);
+                                }
+                              }}
+                              disabled={saving}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs disabled:opacity-50">
+                              {saving ? '...' : (locale === 'ar' ? 'تنفيذ التحويل الآن' : 'Execute Transfer')}
                             </button>
                           </PermissionGate>
                         )}

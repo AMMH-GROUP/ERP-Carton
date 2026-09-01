@@ -7,7 +7,14 @@ import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
 export default function PurchaseInvoicesPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useTranslation();
 
   const mockInvoices = [
@@ -56,7 +63,9 @@ export default function PurchaseInvoicesPage() {
             </div>
 
             <PermissionGate module="purchase_invoices" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button 
+                onClick={() => router.push('/purchasing/invoices/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'فاتورة شراء جديدة' : 'New Purchase Invoice'}</span>
               </button>

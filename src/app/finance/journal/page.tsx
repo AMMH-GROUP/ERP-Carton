@@ -6,9 +6,11 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { BookOpen, Plus, Search, CheckCircle2, Clock, Scale } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export default function JournalEntriesPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
 
   const mockJEs = [
     {
@@ -62,7 +64,7 @@ export default function JournalEntriesPage() {
             </div>
 
             <PermissionGate module="journal_entries" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/finance/journal/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'قيد محاسبي يدوي' : 'Manual Journal Entry'}</span>
               </button>

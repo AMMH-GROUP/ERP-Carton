@@ -6,11 +6,30 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Sliders, Plus, Trash2, Save, Calculator, DollarSign, Percent } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 export default function PricingEnginePage() {
   const { t, locale } = useTranslation();
   const [selectedProduct, setSelectedProduct] = useState('FG-BOX-3020');
   const [profitMargin, setProfitMargin] = useState(15.0);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('pricing_formulas').upsert({ product_code: selectedProduct, margin: profitMargin });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const [components, setComponents] = useState([
     { id: '1', type: 'raw_material', method: 'per_unit', value: 5.20, description: locale === 'ar' ? 'تكلفة الورق الخام (BOM)' : 'Raw Paper Cost' },
@@ -63,9 +82,9 @@ export default function PricingEnginePage() {
             </div>
 
             <PermissionGate module="pricing" action="edit">
-              <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all disabled:opacity-70">
                 <Save className="w-4 h-4" />
-                <span>{locale === 'ar' ? 'حفظ المعادلة' : 'Save Formula'}</span>
+                <span>{saving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (saved ? (locale === 'ar' ? 'تم الحفظ' : 'Saved!') : (locale === 'ar' ? 'حفظ المعادلة' : 'Save Formula'))}</span>
               </button>
             </PermissionGate>
           </div>

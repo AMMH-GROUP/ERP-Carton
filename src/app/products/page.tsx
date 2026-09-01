@@ -20,11 +20,13 @@ import {
   DollarSign
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export default function ProductsPage() {
   const { t, locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const router = useRouter();
 
   const mockProducts = [
     {
@@ -116,7 +118,7 @@ export default function ProductsPage() {
               </Link>
 
               <PermissionGate module="products" action="create">
-                <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                <button onClick={() => router.push('/products/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                   <Plus className="w-4 h-4" />
                   <span>{locale === 'ar' ? 'إضافة منتج جديد' : 'Add Product'}</span>
                 </button>

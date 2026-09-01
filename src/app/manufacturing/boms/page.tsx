@@ -5,9 +5,11 @@ import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Factory, Plus, Layers, Search, CheckCircle2, Sliders, Edit, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function BOMsPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
 
   const mockBOMs = [
     {
@@ -55,7 +57,7 @@ export default function BOMsPage() {
             </div>
 
             <PermissionGate module="bom" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/manufacturing/boms/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'معادلة تصنيع جديدة (BOM)' : 'New BOM Formula'}</span>
               </button>
@@ -97,7 +99,7 @@ export default function BOMsPage() {
                   </span>
 
                   <PermissionGate module="bom" action="edit">
-                    <button className="text-indigo-600 hover:underline font-bold">
+                    <button onClick={() => router.push(`/manufacturing/boms/${b.id}`)} className="text-indigo-600 hover:underline font-bold">
                       {locale === 'ar' ? 'تعديل المعادلة' : 'Edit BOM'}
                     </button>
                   </PermissionGate>

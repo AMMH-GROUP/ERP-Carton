@@ -32,13 +32,16 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  // Use getSession() for fast local JWT check (no network round-trip)
+  // This is the key performance optimization — getUser() makes an API call
+  // to Supabase on every request which adds 2-10s latency
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  // Allow access to login page
+  // Login page logic
   if (request.nextUrl.pathname.startsWith('/login')) {
-    if (user) {
+    if (session) {
       return NextResponse.redirect(new URL('/', request.url));
     }
     return response;
@@ -49,6 +52,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)$).*)',
   ],
 };

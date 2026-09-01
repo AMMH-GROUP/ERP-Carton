@@ -6,6 +6,8 @@ import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Factory, Plus, Search, CheckCircle2, Clock, Play, Pause, AlertTriangle } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ProductionOrdersPage() {
   const { t, locale } = useTranslation();
@@ -37,6 +39,29 @@ export default function ProductionOrdersPage() {
     },
   ];
 
+  const router = useRouter();
+  const [mos, setMos] = useState(mockMOs);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleRelease = async (id: string) => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('manufacturing_orders').update({ status: 'in_progress' }).eq('id', id);
+      setMos(mos.map(mo => mo.id === id ? { ...mo, status: 'in_progress' } : mo));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+      setMos(mos.map(mo => mo.id === id ? { ...mo, status: 'in_progress' } : mo));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <PermissionGate module="production_orders" action="view">
       <AppShell>
@@ -58,7 +83,7 @@ export default function ProductionOrdersPage() {
             </div>
 
             <PermissionGate module="production_orders" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/manufacturing/orders/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'أمر إنتاج جديد' : 'New Production Order'}</span>
               </button>
@@ -82,7 +107,7 @@ export default function ProductionOrdersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  {mockMOs.map((mo) => {
+                  {mos.map((mo) => {
                     const progress = Math.round((mo.produced_qty / mo.planned_qty) * 100);
                     return (
                       <tr key={mo.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -110,8 +135,8 @@ export default function ProductionOrdersPage() {
                         <td className="p-3.5 text-end">
                           {mo.status === 'planned' && (
                             <PermissionGate module="production_orders" action="edit">
-                              <button className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs">
-                                {locale === 'ar' ? 'إفراج عن أمر الإنتاج' : 'Release MO'}
+                              <button onClick={() => handleRelease(mo.id)} disabled={saving} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs">
+                                {saving ? (locale === 'ar' ? 'جاري...' : 'Releasing...') : (locale === 'ar' ? 'إفراج عن أمر الإنتاج' : 'Release MO')}
                               </button>
                             </PermissionGate>
                           )}

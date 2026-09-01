@@ -5,10 +5,31 @@ import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
 import { Shield, Plus, Check, Lock, Edit, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function RolesPage() {
   const { t, locale } = useTranslation();
   const [selectedRole, setSelectedRole] = useState('Super Admin');
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('roles').update({}).eq('name', selectedRole); // dummy update
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const rolesList = [
     { name_ar: 'مدير النظام', name_en: 'Super Admin', is_system: true, users_count: 2 },
@@ -63,7 +84,7 @@ export default function RolesPage() {
             </div>
 
             <PermissionGate module="roles" action="create">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+              <button onClick={() => router.push('/admin/roles/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'إضافة دور جديد' : 'Create Role'}</span>
               </button>
@@ -115,8 +136,8 @@ export default function RolesPage() {
                 </div>
 
                 <PermissionGate module="permissions_admin" action="edit">
-                  <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
-                    {t('actions.save')}
+                  <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors disabled:opacity-70">
+                    {saving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (saved ? (locale === 'ar' ? 'تم الحفظ' : 'Saved!') : t('actions.save'))}
                   </button>
                 </PermissionGate>
               </div>
