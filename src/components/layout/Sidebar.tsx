@@ -120,6 +120,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: t('nav.expenses'), href: '/finance/expenses', permission: 'expenses' },
         { label: t('nav.ar'), href: '/finance/ar', permission: 'sales_invoices' },
         { label: t('nav.ap'), href: '/finance/ap', permission: 'purchase_invoices' },
+        { label: locale === 'ar' ? 'التقارير المالية وشجرة الحسابات' : 'Financial & GL Reports', href: '/finance/reports', permission: 'chart_of_accounts' },
       ],
     },
     {

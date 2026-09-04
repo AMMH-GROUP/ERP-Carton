@@ -181,7 +181,7 @@ export default function UsersPage() {
                             </button>
                           </PermissionGate>
                           <PermissionGate module="users" action="delete">
-                            <button onClick={() => handleDelete(u.id)} disabled={saving} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50">
+                            <button onClick={() => u.id && handleDelete(u.id)} disabled={saving} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </PermissionGate>
