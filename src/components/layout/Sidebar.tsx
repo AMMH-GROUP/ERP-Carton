@@ -20,7 +20,8 @@ import {
   Receipt,
   X,
   PlusCircle,
-  Calculator
+  Calculator,
+  Sparkles
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -60,7 +61,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: ShoppingCart,
       permission: { module: 'sales_orders', action: 'view' },
       items: [
-        { label: locale === 'ar' ? '➕ حاسبة عروض الأسعار' : '➕ Quotation Pricing Builder', href: '/sales/quotations/create', permission: 'quotations' },
+        { label: locale === 'ar' ? '⚡ حاسبة عروض الأسعار' : '⚡ Quotation Calculator', href: '/sales/quotations/create', permission: 'quotations', isHighlight: true },
         { label: t('nav.quotations'), href: '/sales/quotations', permission: 'quotations' },
         { label: t('nav.salesOrders'), href: '/sales/orders', permission: 'sales_orders' },
         { label: t('nav.deliveries'), href: '/sales/deliveries', permission: 'deliveries' },
@@ -158,32 +159,34 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile Backdrop Overlay */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
         />
       )}
 
+      {/* Independent Fixed Height Sidebar Panel */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 z-40 w-64 bg-slate-900 dark:bg-slate-900 border-r rtl:border-r-0 rtl:border-l border-slate-800 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out shrink-0 ${
+        className={`fixed lg:sticky top-0 h-screen max-h-screen z-40 w-64 bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur-md border-r rtl:border-r-0 rtl:border-l border-slate-800/80 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out shrink-0 shadow-2xl overflow-hidden ${
           isOpen
             ? 'translate-x-0'
             : '-translate-x-full ltr:-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0'
         }`}
       >
-        {/* Brand Logo & Mobile Close */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800 bg-slate-950/40">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 font-bold">
+        {/* Header Logo & Title (Fixed Top) */}
+        <div className="h-16 shrink-0 flex items-center justify-between px-5 border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-sm">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-200">
               <Box className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="font-extrabold text-sm text-white tracking-wide">
+              <h1 className="font-black text-sm text-white tracking-wide flex items-center gap-1.5">
                 {t('app.shortTitle')}
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </h1>
-              <p className="text-[10px] text-slate-400 font-medium">
+              <p className="text-[10px] text-slate-400 font-bold">
                 {locale === 'ar' ? 'مصنع الكرتون المضلع' : 'Corrugated Carton ERP'}
               </p>
             </div>
@@ -191,26 +194,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Quick Action Button */}
-        <div className="px-3 pt-3">
+        {/* Quick Action Pricing Builder Button (Fixed Top Sub-bar) */}
+        <div className="px-3.5 pt-3.5 pb-1 shrink-0">
           <Link
             href="/sales/quotations/create"
             onClick={onClose}
-            className="w-full py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all duration-200"
+            className="w-full py-2.5 px-3.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-black shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Calculator className="w-4 h-4" />
-            <span>{locale === 'ar' ? 'حساب عرض سعر جديد' : 'New Box Pricing'}</span>
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            <span>{locale === 'ar' ? 'حساب عرض سعر علبة' : 'New Box Pricing'}</span>
           </Link>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+        {/* Independent Scrolling Navigation Menu Container */}
+        <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3 space-y-1.5">
           {navGroups.map((group) => {
             if (
               group.permission &&
@@ -229,10 +232,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   key={group.key}
                   href={group.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'hover:bg-slate-800/80 hover:text-white text-slate-400'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30 font-black'
+                      : 'hover:bg-slate-800/80 hover:text-white text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -248,9 +251,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div key={group.key} className="space-y-1">
                 <button
                   onClick={() => toggleSection(group.key)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                     hasActiveChild
-                      ? 'bg-slate-800 text-white border-l-2 rtl:border-l-0 rtl:border-r-2 border-indigo-500'
+                      ? 'bg-slate-800/90 text-white border-l-2 rtl:border-l-0 rtl:border-r-2 border-indigo-500 shadow-xs'
                       : 'hover:bg-slate-800/70 hover:text-white text-slate-400'
                   }`}
                 >
@@ -259,14 +262,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <span>{group.label}</span>
                   </div>
                   {isExpanded ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180 transition-transform duration-200" />
                   )}
                 </button>
 
                 {isExpanded && (
-                  <div className="ltr:pl-8 rtl:pr-8 space-y-1 py-1 transition-all">
+                  <div className="ltr:pl-6 rtl:pr-6 space-y-1 py-1 transition-all">
                     {group.items?.map((item) => {
                       if (
                         item.permission &&
@@ -283,10 +286,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           key={item.href}
                           href={item.href}
                           onClick={onClose}
-                          className={`block px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                             isChildActive
-                              ? 'bg-indigo-600/20 text-indigo-300 font-bold border-l-2 rtl:border-l-0 rtl:border-r-2 border-indigo-500'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                              ? 'bg-indigo-600/25 text-indigo-300 font-extrabold border-l-2 rtl:border-l-0 rtl:border-r-2 border-indigo-400 shadow-xs'
+                              : item.isHighlight
+                              ? 'text-amber-300 font-bold bg-amber-500/10 hover:bg-amber-500/20 hover:text-amber-200'
+                              : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 hover:translate-x-1 rtl:hover:-translate-x-1'
                           }`}
                         >
                           {item.label}
@@ -300,10 +305,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Footer info */}
-        <div className="p-4 border-t border-slate-800 text-[11px] text-slate-500 text-center bg-slate-950/40">
-          <p className="font-semibold text-slate-400">Carton ERP v1.0.0</p>
-          <p className="mt-0.5">© 2026 Corrugated Carton Factory</p>
+        {/* Footer Info (Fixed Bottom) */}
+        <div className="p-3.5 shrink-0 border-t border-slate-800/80 text-[11px] text-slate-500 text-center bg-slate-950/60 backdrop-blur-xs">
+          <p className="font-extrabold text-slate-400 tracking-wide">Carton ERP v1.0.0</p>
+          <p className="mt-0.5 text-[10px] text-slate-500">© 2026 Corrugated Carton ERP</p>
         </div>
       </aside>
     </>
