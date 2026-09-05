@@ -4,43 +4,86 @@ import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useTranslation } from '@/lib/i18n/context';
 import { PermissionGate } from '@/components/shared/PermissionGate';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Receipt, Plus, AlertTriangle, FileText } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { EInvoiceTemplate, EInvoiceData } from '@/components/shared/EInvoiceTemplate';
 
 export default function PurchaseInvoicesPage() {
   const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useTranslation();
+  const [selectedInvoice, setSelectedInvoice] = useState<EInvoiceData | null>(null);
 
   const mockInvoices = [
     {
       id: '1',
       pinv_number: 'PINV-2026-00014',
       po_number: 'PO-2026-00014',
-      supplier: locale === 'ar' ? 'شركة النيل للورق الخام والكرتون' : 'Nile Paper Raw Materials Co.',
+      supplier_ar: 'شركة النيل للورق الخام والكرتون',
+      supplier_en: 'Nile Paper Raw Materials Co.',
+      supplier_tax_id: '849-112-704',
+      supplier_cr_no: 'CR-19402',
+      address: 'المنطقة الصناعية - السادات - المنوفية',
       supplier_inv_ref: 'INV-NILE-9941',
       date: '2026-08-31',
-      total_amount: 1625000,
+      due_date: '2026-09-30',
+      total_amount: 1624500,
       three_way_match: 'matched',
       status: 'posted',
+      items: [
+        {
+          item_code: 'RAW-PAPER-KRAFT-175',
+          description_ar: 'ورق كرافت مستورد زنة 175 جرام/م2 رول عرض 140 سم',
+          description_en: 'Imported Kraft Liner Board 175 GSM 140cm Roll',
+          quantity: 50,
+          uom: 'طن',
+          unit_price: 28500.0,
+        },
+      ],
     },
     {
       id: '2',
       pinv_number: 'PINV-2026-00012',
       po_number: 'PO-2026-00010',
-      supplier: locale === 'ar' ? 'الشركة العالمية للمواد اللاصقة والنشا' : 'Global Starch Ltd',
+      supplier_ar: 'الشركة العالمية للمواد اللاصقة والنشا',
+      supplier_en: 'Global Starch & Adhesives Ltd',
+      supplier_tax_id: '501-884-219',
+      supplier_cr_no: 'CR-33019',
+      address: 'طريق مصر الإسكندرية الصحراوي - الجيزة',
       supplier_inv_ref: 'INV-GST-1120',
       date: '2026-08-22',
-      total_amount: 95000, // PO total was 90000 -> 5000 variance
+      due_date: '2026-09-22',
+      total_amount: 95000,
       three_way_match: 'variance_detected',
       status: 'draft',
+      items: [
+        {
+          item_code: 'RAW-ADHESIVE-STARCH',
+          description_ar: 'نشا ذرة صناعي عالي الجودة لتصنيع غراء الكرتون المضلع',
+          description_en: 'Industrial Maize Starch for Corrugator Glue',
+          quantity: 5,
+          uom: 'طن',
+          unit_price: 16666.67,
+        },
+      ],
     },
   ];
+
+  const handleOpenEInvoice = (inv: typeof mockInvoices[0]) => {
+    setSelectedInvoice({
+      invoice_number: inv.supplier_inv_ref,
+      issue_date: inv.date,
+      due_date: inv.due_date,
+      payment_terms: 'آجل 30 يوم (مشتريات)',
+      issuer_type: 'purchase',
+      receiver_name_ar: inv.supplier_ar,
+      receiver_name_en: inv.supplier_en,
+      receiver_tax_id: inv.supplier_tax_id,
+      receiver_cr_no: inv.supplier_cr_no,
+      receiver_address: inv.address,
+      items: inv.items,
+    });
+  };
 
   return (
     <PermissionGate module="purchase_invoices" action="view">
@@ -57,7 +100,7 @@ export default function PurchaseInvoicesPage() {
               </div>
               <p className="text-xs text-slate-500 mt-1">
                 {locale === 'ar'
-                  ? 'فواتير المشتريات والربط مع أمر الشراء وإذن الاستلام (3-Way Match Verification) (PRD §48-49)'
+                  ? 'فواتير المشتريات الضريبية والربط مع أمر الشراء وإذن الاستلام (3-Way Match Verification) (PRD §48-49)'
                   : 'Purchase Invoices management and 3-Way Match verification (PO vs GRN vs Invoice)'}
               </p>
             </div>
@@ -65,7 +108,7 @@ export default function PurchaseInvoicesPage() {
             <PermissionGate module="purchase_invoices" action="create">
               <button 
                 onClick={() => router.push('/purchasing/invoices/new')}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer">
                 <Plus className="w-4 h-4" />
                 <span>{locale === 'ar' ? 'فاتورة شراء جديدة' : 'New Purchase Invoice'}</span>
               </button>
@@ -85,6 +128,7 @@ export default function PurchaseInvoicesPage() {
                     <th className="p-3.5 text-start">{t('common.total')}</th>
                     <th className="p-3.5 text-start">{locale === 'ar' ? 'الربط الثلاثي (3-Way Match)' : '3-Way Match'}</th>
                     <th className="p-3.5 text-start">{t('common.status')}</th>
+                    <th className="p-3.5 text-center">{locale === 'ar' ? 'الفاتورة الضريبية' : 'Tax Invoice'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
@@ -94,7 +138,9 @@ export default function PurchaseInvoicesPage() {
                         {inv.pinv_number}
                       </td>
                       <td className="p-3.5 font-mono font-bold">{inv.po_number}</td>
-                      <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">{inv.supplier}</td>
+                      <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                        {locale === 'ar' ? inv.supplier_ar : inv.supplier_en}
+                      </td>
                       <td className="p-3.5 font-mono text-slate-500">{inv.supplier_inv_ref}</td>
                       <td className="p-3.5 font-mono font-extrabold text-slate-900 dark:text-slate-100">
                         {formatCurrency(inv.total_amount)}
@@ -115,14 +161,32 @@ export default function PurchaseInvoicesPage() {
                           {inv.status}
                         </span>
                       </td>
+                      <td className="p-3.5 text-center">
+                        <button
+                          onClick={() => handleOpenEInvoice(inv)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 dark:text-indigo-300 font-bold rounded-lg border border-indigo-200 dark:border-indigo-800 transition-colors cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>{locale === 'ar' ? 'معاينة وطباعة الفاتورة' : 'View Tax Invoice'}</span>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {/* E-Invoice Modal */}
+          {selectedInvoice && (
+            <EInvoiceTemplate 
+              invoice={selectedInvoice} 
+              onClose={() => setSelectedInvoice(null)} 
+            />
+          )}
         </div>
       </AppShell>
     </PermissionGate>
   );
 }
+
